@@ -1,5 +1,7 @@
 import pandas as pd
 import numpy as np
+from sklearn.preprocessing import LabelEncoder
+
 
 def load_data(filepath):
     """
@@ -49,6 +51,16 @@ def extract_date_features(df, date_column="date"):
     return df
 
 
+def encode_categorical(df):
+    """
+    Convertit les colonnes texte en nombres.
+    Le modèle ML ne comprend que des chiffres — pas du texte.
+    LabelEncoder remplace chaque catégorie unique par un entier.
+    """
+    le = LabelEncoder()
+    df["family_encoded"] = le.fit_transform(df["family"])
+    print(f"Colonne 'family' encodée : {df['family'].nunique()} catégories")
+    return df
 def run_preprocessing(filepath):
     """
     Fonction principale qui enchaîne toutes les étapes.
@@ -58,4 +70,5 @@ def run_preprocessing(filepath):
     df = convert_dates(df)
     check_missing_values(df)
     df = extract_date_features(df)
+    df = encode_categorical(df) 
     return df

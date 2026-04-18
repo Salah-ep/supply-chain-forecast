@@ -1,4 +1,4 @@
-import pandas as import pd
+import pandas as  pd
 import numpy as np
 import matplotlib.pyplot as plt 
 from sklearn.ensemble import RandomForestRegressor
@@ -7,7 +7,7 @@ import os
 
 
 # Les colonnes qu'on donne au modèle comme entrée
-FEATURES = ["year", "month", "day", "dayofweek", "weekofyear", "store_nbr"]
+FEATURES = ["year", "month", "day", "dayofweek", "weekofyear", "store_nbr", "family_encoded"]
 
 # La colonne qu'on veut prédire
 TARGET = "sales"
@@ -36,7 +36,8 @@ def train_model(train):
     y_train = train[TARGET]
 
     model = RandomForestRegressor(
-        n_estimators=100,   # 100 arbres de décision
+        n_estimators=80, # 100 arbres de décision
+        max_depth=15,
         random_state=42,    # Pour avoir des résultats reproductibles
         n_jobs=-1           # Utilise tous les coeurs du CPU
     )
