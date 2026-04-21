@@ -7,7 +7,9 @@ import os
 
 
 # Les colonnes qu'on donne au modèle comme entrée
-FEATURES = ["year", "month", "day", "dayofweek", "weekofyear", "store_nbr", "family_encoded"]
+FEATURES = ["year", "month", "day","dayofweek", "weekofyear", 
+            "store_nbr", "family_encoded", "is_holiday","is_workday",
+            "city_encoded", "state_encoded", "type_encoded", "cluster"]
 
 # La colonne qu'on veut prédire
 TARGET = "sales"
