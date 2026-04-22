@@ -3,10 +3,11 @@ import numpy as np
 from sklearn.preprocessing import LabelEncoder
 
 
+
+
 def load_data(filepath):
     """
-    Charge le dataset CSV depuis le chemin donné.
-    Retourne un DataFrame pandas.
+    Charge le dataset CSV depuis le chemin donné et Retourne un DataFrame pandas.
     """
     df = pd.read_csv(filepath)
     print(f"Dataset chargé : {df.shape[0]} lignes, {df.shape[1]} colonnes")
