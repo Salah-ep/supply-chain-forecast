@@ -117,10 +117,7 @@ def merge_stores(df, stores_filepath):
     return df
     
 def run_preprocessing(filepath):
-    """
-    Fonction principale qui enchaîne toutes les étapes.
-    C'est le 'main' de ce module.
-    """
+    
     df = load_data(filepath)
     df = convert_dates(df)
     check_missing_values(df)
@@ -128,4 +125,5 @@ def run_preprocessing(filepath):
     df = encode_categorical(df) 
     df = merge_holidays(df, "data/holidays_events.csv") 
     df = merge_stores(df, "data/stores.csv")
+    
     return df
