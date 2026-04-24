@@ -6,9 +6,10 @@ from xgboost import XGBRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 import os
 
-FEATURES = ["year", "month", "day", "dayofweek", "weekofyear",
-            "store_nbr", "family_encoded", "is_holiday", "is_workday",
-            "city_encoded", "state_encoded", "type_encoded", "cluster"]
+FEATURES = ["year", "month", "day", "dayofweek",
+            "store_nbr", "family_encoded", "is_holiday",
+            "city_encoded", "state_encoded", "type_encoded", 
+            "cluster", "onpromotion"]
 
 TARGET = "sales"
 
@@ -23,22 +24,24 @@ def split_train_test(df, test_year=2017):
 def train_model(train):
 
     # On échantillonne 20% pour ne pas saturer la RAM
-    train_sample = train.sample(frac=0.2, random_state=42)
+    train_sample = train.sample(frac=0.4, random_state=42)
     print(f"Échantillon d'entraînement : {len(train_sample)} lignes")
 
     X_train = train_sample[FEATURES]
     y_train = train_sample[TARGET]
 
     model = XGBRegressor(
-        n_estimators=500,       # 500 arbres séquentiels
-        learning_rate=0.05,     # Vitesse d'apprentissage — petit = plus précis
-        max_depth=6,            # Profondeur max de chaque arbre
-        subsample=0.8,          # 80% des données par arbre — évite le surapprentissage
-        colsample_bytree=0.8,   # 80% des features par arbre
-        random_state=42,
-        n_jobs=-1,
-        verbosity=0             # Pas de logs inutiles
-    )
+    n_estimators=300,       # réduit de 500 à 300
+    learning_rate=0.1,      # augmenté de 0.05 à 0.1
+    max_depth=8,            # augmenté de 6 à 8
+    subsample=0.8,
+    colsample_bytree=0.8,
+    random_state=42,
+    min_child_weight=5,     #  évite le surapprentissage
+    gamma=0.1,
+    n_jobs=-1,
+    verbosity=0
+)
 
     model.fit(X_train, y_train)
     print("Modèle XGBoost entraîné !")
