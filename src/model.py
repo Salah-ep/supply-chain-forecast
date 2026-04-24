@@ -1,59 +1,51 @@
-import pandas as  pd
+import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestRegressor
+from xgboost import XGBRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 import os
 
-
-# Les colonnes qu'on donne au modèle comme entrée
-FEATURES = ["year", "month", "day","dayofweek", "weekofyear", 
-            "store_nbr", "family_encoded", "is_holiday","is_workday",
+FEATURES = ["year", "month", "day", "dayofweek", "weekofyear",
+            "store_nbr", "family_encoded", "is_holiday", "is_workday",
             "city_encoded", "state_encoded", "type_encoded", "cluster"]
 
-# La colonne qu'on veut prédire
 TARGET = "sales"
 
 
 def split_train_test(df, test_year=2017):
-    """
-    Sépare les données en train et test selon l'année.
-    On entraîne sur les années passées, on teste sur la dernière année.
-    C'est comme séparer des données d'entraînement et de validation.
-    """
     train = df[df["year"] < test_year]
     test  = df[df["year"] >= test_year]
-
     print(f"Train : {len(train)} lignes | Test : {len(test)} lignes")
     return train, test
 
 
 def train_model(train):
-    """
-    Entraîne un modèle Random Forest sur les données d'entraînement.
-    
-    Random Forest = un ensemble d'arbres de décision.
-    """
-    X_train = train[FEATURES]
-    y_train = train[TARGET]
 
-    model = RandomForestRegressor(
-        n_estimators=80, # 100 arbres de décision
-        max_depth=15,
-        random_state=42,    # Pour avoir des résultats reproductibles
-        n_jobs=-1           # Utilise tous les coeurs du CPU
+    # On échantillonne 20% pour ne pas saturer la RAM
+    train_sample = train.sample(frac=0.2, random_state=42)
+    print(f"Échantillon d'entraînement : {len(train_sample)} lignes")
+
+    X_train = train_sample[FEATURES]
+    y_train = train_sample[TARGET]
+
+    model = XGBRegressor(
+        n_estimators=500,       # 500 arbres séquentiels
+        learning_rate=0.05,     # Vitesse d'apprentissage — petit = plus précis
+        max_depth=6,            # Profondeur max de chaque arbre
+        subsample=0.8,          # 80% des données par arbre — évite le surapprentissage
+        colsample_bytree=0.8,   # 80% des features par arbre
+        random_state=42,
+        n_jobs=-1,
+        verbosity=0             # Pas de logs inutiles
     )
 
     model.fit(X_train, y_train)
-    print("Modèle entraîné !")
+    print("Modèle XGBoost entraîné !")
     return model
 
 
 def evaluate_model(model, test):
-    """
-    Évalue la performance du modèle sur les données de test.
-    On compare les prédictions avec les vraies valeurs.
-    """
     X_test = test[FEATURES]
     y_test = test[TARGET]
 
@@ -70,13 +62,8 @@ def evaluate_model(model, test):
 
 
 def plot_predictions(test, predictions, output_dir="outputs"):
-    """
-    Trace les vraies ventes vs les prédictions sur un graphique.
-    Permet de voir visuellement si le modèle est bon.
-    """
     os.makedirs(output_dir, exist_ok=True)
 
-    # On prend un seul magasin pour que le graphique soit lisible
     store = test["store_nbr"].iloc[0]
     mask  = test["store_nbr"] == store
 
@@ -95,12 +82,28 @@ def plot_predictions(test, predictions, output_dir="outputs"):
     print("Graphique sauvegardé : predictions.png")
 
 
+def plot_feature_importance(model, output_dir="outputs"):
+    """
+    Affiche l'importance de chaque feature pour le modèle.
+    Permet de savoir quelles colonnes influencent le plus les prédictions.
+    """
+    importance = pd.Series(model.feature_importances_, index=FEATURES)
+    importance = importance.sort_values(ascending=False)
+
+    plt.figure(figsize=(10, 6))
+    importance.plot(kind="bar")
+    plt.title("Importance des features — XGBoost")
+    plt.ylabel("Score d'importance")
+    plt.tight_layout()
+    plt.savefig(f"{output_dir}/feature_importance.png")
+    plt.show()
+    print("Graphique sauvegardé : feature_importance.png")
+
+
 def run_model(df):
-    """
-    Fonction principale qui enchaîne toutes les étapes.
-    """
-    train, test      = split_train_test(df)
-    model            = train_model(train)
+    train, test         = split_train_test(df)
+    model               = train_model(train)
     predictions, y_test = evaluate_model(model, test)
     plot_predictions(test, predictions)
+    plot_feature_importance(model)
     return model
