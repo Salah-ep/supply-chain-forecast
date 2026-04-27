@@ -9,10 +9,9 @@ import os
 FEATURES = ["year", "month", "day", "dayofweek",
             "store_nbr", "family_encoded", "is_holiday",
             "city_encoded", "state_encoded", "type_encoded", 
-            "cluster", "onpromotion"]
+            "cluster", "onpromotion"] 
 
 TARGET = "sales"
-
 
 def split_train_test(df, test_year=2017):
     train = df[df["year"] < test_year]
@@ -20,10 +19,9 @@ def split_train_test(df, test_year=2017):
     print(f"Train : {len(train)} lignes | Test : {len(test)} lignes")
     return train, test
 
-
 def train_model(train):
 
-    # On échantillonne 20% pour ne pas saturer la RAM
+    # On échantillonne 40% pour ne pas saturer la RAM
     train_sample = train.sample(frac=0.4, random_state=42)
     print(f"Échantillon d'entraînement : {len(train_sample)} lignes")
 
@@ -72,9 +70,9 @@ def plot_predictions(test, predictions, output_dir="outputs"):
 
     plt.figure(figsize=(14, 5))
     plt.plot(test["date"].values[mask], test[TARGET].values[mask],
-             label="Réel", linewidth=1)
+            label="Réel", linewidth=1)
     plt.plot(test["date"].values[mask], predictions[mask],
-             label="Prédit", linewidth=1, linestyle="--")
+            label="Prédit", linewidth=1, linestyle="--")
     plt.title(f"Réel vs Prédit — Magasin {store}")
     plt.xlabel("Date")
     plt.ylabel("Ventes")
