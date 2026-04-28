@@ -115,7 +115,42 @@ def merge_stores(df, stores_filepath):
 
     print(f"Infos magasins intégrées : {stores.shape[0]} magasins")
     return df
+
+def add_lag_features(df):
+    print("Calcul des lag features...")
     
+    # Trier par magasin, famille, date — obligatoire avant le shift
+    df = df.sort_values(["store_nbr", "family", "date"]).reset_index(drop=True)
+
+    # Grouper par magasin + famille
+    group = df.groupby(["store_nbr", "family"])["sales"]
+
+    # lag_1  = ventes du jour précédent
+    df["lag_1"]  = group.shift(1)
+
+    # lag_7  = ventes il y a 7 jours (même jour semaine dernière)
+    df["lag_7"]  = group.shift(7)
+
+    # lag_30 = ventes il y a 30 jours
+    df["lag_30"] = group.shift(30)
+
+    # rolling_7  = moyenne des 7 derniers jours (tendance court terme)
+    df["rolling_7"]  = group.transform(
+        lambda x: x.shift(1).rolling(window=7, min_periods=1).mean()
+    )
+
+    # rolling_30 = moyenne des 30 derniers jours (tendance long terme)
+    df["rolling_30"] = group.transform(
+        lambda x: x.shift(1).rolling(window=30, min_periods=1).mean()
+    )
+
+    # Les premières lignes auront des NaN (pas de passé) → on remplace par 0
+    lag_cols = ["lag_1", "lag_7", "lag_30", "rolling_7", "rolling_30"]
+    df[lag_cols] = df[lag_cols].fillna(0)
+
+    print(f"Lag features ajoutées : {lag_cols}")
+    return df
+
 def run_preprocessing(filepath):
     
     df = load_data(filepath)
@@ -125,5 +160,6 @@ def run_preprocessing(filepath):
     df = encode_categorical(df) 
     df = merge_holidays(df, "data/holidays_events.csv") 
     df = merge_stores(df, "data/stores.csv")
+    df = add_lag_features(df)
     
     return df

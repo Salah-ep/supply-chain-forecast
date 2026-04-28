@@ -8,8 +8,8 @@ import os
 
 FEATURES = ["year", "month", "day", "dayofweek",
             "store_nbr", "family_encoded", "is_holiday",
-            "city_encoded", "state_encoded", "type_encoded", 
-            "cluster", "onpromotion"] 
+            "city_encoded", "state_encoded", "type_encoded", "cluster", 
+            "onpromotion", "lag_1", "lag_7", "lag_30", "rolling_7", "rolling_30"] 
 
 TARGET = "sales"
 
@@ -61,19 +61,22 @@ def evaluate_model(model, test):
 
     return predictions, y_test
 
-
 def plot_predictions(test, predictions, output_dir="outputs"):
     os.makedirs(output_dir, exist_ok=True)
 
-    store = test["store_nbr"].iloc[0]
-    mask  = test["store_nbr"] == store
+    # Trouve le bon code pour BEVERAGES
+    beverages_code = test[test["family"] == "BEVERAGES"]["family_encoded"].iloc[0]
+    mask = (test["store_nbr"] == 1) & (test["family_encoded"] == beverages_code)
+
+    # Clip les prédictions négatives à 0
+    preds_clipped = np.clip(predictions, 0, None)
 
     plt.figure(figsize=(14, 5))
     plt.plot(test["date"].values[mask], test[TARGET].values[mask],
-            label="Réel", linewidth=1)
-    plt.plot(test["date"].values[mask], predictions[mask],
-            label="Prédit", linewidth=1, linestyle="--")
-    plt.title(f"Réel vs Prédit — Magasin {store}")
+            label="Réel", linewidth=1.5)
+    plt.plot(test["date"].values[mask], preds_clipped[mask],
+            label="Prédit", linewidth=1.5, linestyle="--", color="orange")
+    plt.title("Réel vs Prédit — Magasin 1 | Famille BEVERAGES")
     plt.xlabel("Date")
     plt.ylabel("Ventes")
     plt.legend()
