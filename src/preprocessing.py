@@ -151,6 +151,41 @@ def add_lag_features(df):
     print(f"Lag features ajoutées : {lag_cols}")
     return df
 
+def add_advanced_features(df):
+    """
+    Ajoute des features avancées pour capturer des patterns
+    plus complexes dans les données.
+    """
+    print("Calcul des features avancées...")
+
+    # 1. Moyenne des ventes par famille (tous magasins)
+    # Capture la tendance globale d'une famille de produits
+    family_avg = df.groupby(["date", "family"])["sales"].transform("mean")
+    df["family_avg_sales"] = family_avg
+
+    # 2. Moyenne des ventes par magasin (toutes familles)
+    # Capture la performance globale d'un magasin
+    store_avg = df.groupby(["date", "store_nbr"])["sales"].transform("mean")
+    df["store_avg_sales"] = store_avg
+
+    # 3. Tendance court terme — est-ce que les ventes montent ou descendent ?
+    # On compare lag_1 avec lag_7 : positif = tendance haussière
+    df["trend_7"] = df["lag_1"] - df["lag_7"]
+
+    # 4. Ratio promotion — quel % des produits de ce magasin sont en promo ?
+    promo_ratio = df.groupby(["date", "store_nbr"])["onpromotion"].transform("mean")
+    df["promo_ratio"] = promo_ratio
+
+    # 5. Est-ce le début ou la fin du mois ? (impact sur les achats)
+    df["is_month_start"] = (df["day"] <= 5).astype(int)
+    df["is_month_end"]   = (df["day"] >= 25).astype(int)
+
+    # 6. Est-ce le weekend ?
+    df["is_weekend"] = (df["dayofweek"] >= 5).astype(int)
+
+    print("Features avancées ajoutées !")
+    return df
+
 def run_preprocessing(filepath):
     
     df = load_data(filepath)
@@ -161,5 +196,6 @@ def run_preprocessing(filepath):
     df = merge_holidays(df, "data/holidays_events.csv") 
     df = merge_stores(df, "data/stores.csv")
     df = add_lag_features(df)
+    df = add_advanced_features(df)
     
     return df

@@ -8,8 +8,11 @@ import os
 
 FEATURES = ["year", "month", "day", "dayofweek",
             "store_nbr", "family_encoded", "is_holiday",
-            "city_encoded", "state_encoded", "type_encoded", "cluster", 
-            "onpromotion", "lag_1", "lag_7", "lag_30", "rolling_7", "rolling_30"] 
+            "city_encoded", "state_encoded", "type_encoded",
+            "cluster", "onpromotion",
+            "lag_1", "lag_7", "lag_30", "rolling_7", "rolling_30",
+            "family_avg_sales", "store_avg_sales", "trend_7",
+            "promo_ratio", "is_month_start", "is_month_end", "is_weekend"]
 
 TARGET = "sales"
 
