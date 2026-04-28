@@ -1,11 +1,8 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.ensemble import RandomForestRegressor
-from xgboost import XGBRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 import os
-
 FEATURES = ["year", "month", "day", "dayofweek",
             "store_nbr", "family_encoded", "is_holiday",
             "city_encoded", "state_encoded", "type_encoded",
@@ -22,30 +19,37 @@ def split_train_test(df, test_year=2017):
     print(f"Train : {len(train)} lignes | Test : {len(test)} lignes")
     return train, test
 
-def train_model(train):
+def train_model(train, params=None):
+    """
+    Entraîne LightGBM avec les paramètres donnés.
+    Si params=None, utilise les paramètres par défaut.
+    """
+    from lightgbm import LGBMRegressor
 
-    # On échantillonne 55% pour ne pas saturer la RAM
     train_sample = train.sample(frac=0.55, random_state=42)
     print(f"Échantillon d'entraînement : {len(train_sample)} lignes")
 
     X_train = train_sample[FEATURES]
     y_train = train_sample[TARGET]
 
-    model = XGBRegressor(
-    n_estimators=300,       # réduit de 500 à 300
-    learning_rate=0.1,      # augmenté de 0.05 à 0.1
-    max_depth=8,            # augmenté de 6 à 8
-    subsample=0.8,
-    colsample_bytree=0.8,
-    random_state=42,
-    min_child_weight=5,     #  évite le surapprentissage
-    gamma=0.1,
-    n_jobs=-1,
-    verbosity=0
-)
+    if params is None:
+        params = {
+            "n_estimators": 300,
+            "learning_rate": 0.1,
+            "max_depth": 8,
+            "random_state": 42,
+            "n_jobs": -1,
+            "verbose": -1
+        }
 
+    # On ajoute les paramètres fixes
+    params["random_state"] = 42
+    params["n_jobs"]       = -1
+    params["verbose"]      = -1
+
+    model = LGBMRegressor(**params)
     model.fit(X_train, y_train)
-    print("Modèle XGBoost entraîné !")
+    print("Modèle LightGBM entraîné !")
     return model
 
 
@@ -99,7 +103,7 @@ def plot_feature_importance(model, output_dir="outputs"):
 
     plt.figure(figsize=(10, 6))
     importance.plot(kind="bar")
-    plt.title("Importance des features — XGBoost")
+    plt.title("Importance des features — LightGBM")
     plt.ylabel("Score d'importance")
     plt.tight_layout()
     plt.savefig(f"{output_dir}/feature_importance.png")
@@ -107,9 +111,9 @@ def plot_feature_importance(model, output_dir="outputs"):
     print("Graphique sauvegardé : feature_importance.png")
 
 
-def run_model(df):
+def run_model(df, params=None):
     train, test         = split_train_test(df)
-    model               = train_model(train)
+    model               = train_model(train, params)
     predictions, y_test = evaluate_model(model, test)
     plot_predictions(test, predictions)
     plot_feature_importance(model)
