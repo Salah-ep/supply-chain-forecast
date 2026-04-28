@@ -24,8 +24,8 @@ def split_train_test(df, test_year=2017):
 
 def train_model(train):
 
-    # On échantillonne 40% pour ne pas saturer la RAM
-    train_sample = train.sample(frac=0.4, random_state=42)
+    # On échantillonne 55% pour ne pas saturer la RAM
+    train_sample = train.sample(frac=0.55, random_state=42)
     print(f"Échantillon d'entraînement : {len(train_sample)} lignes")
 
     X_train = train_sample[FEATURES]
